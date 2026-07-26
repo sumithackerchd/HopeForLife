@@ -30,7 +30,7 @@ const App: React.FC = () => {
               <Route
                 key={index}
                 path={route.path}
-                element={route.public ? route.element : <RouteGuard requireAuth>{route.element}</RouteGuard>} 
+                element={route.public ? route.element : <RouteGuard requireAuth requireAdmin={route.path === '/admin'}>{route.element}</RouteGuard>} 
               >
                 {route.path === '/' && publicRoutes.map((childRoute, childIndex) => (
                   <Route
