@@ -18,6 +18,8 @@ const DonationList = lazy(() => import('@/pages/admin/donations/DonationList'));
 const UserList = lazy(() => import('@/pages/admin/users/UserList'));
 const SettingsForm = lazy(() => import('@/pages/admin/settings/SettingsForm'));
 
+import NotFound from '@/pages/NotFound';
+
 const App: React.FC = () => {
   return (
     <Router>
@@ -87,7 +89,7 @@ const App: React.FC = () => {
               } />
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </main>

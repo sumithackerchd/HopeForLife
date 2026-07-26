@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 import { Calendar, ChevronRight } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { Database } from '@/types/database';
 
 type Update = Database['public']['Tables']['updates']['Row'];

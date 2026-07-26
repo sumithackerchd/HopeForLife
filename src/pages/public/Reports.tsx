@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { Database } from '@/types/database';
 import { useLocation } from 'react-router-dom';
 

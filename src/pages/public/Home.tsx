@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Heart, Shield, Activity, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SEO } from '@/components/common/SEO';
-import { supabase } from '@/db/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { Database } from '@/types/database';
 
 type Campaign = Database['public']['Tables']['campaigns']['Row'];

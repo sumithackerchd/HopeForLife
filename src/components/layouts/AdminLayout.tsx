@@ -43,7 +43,7 @@ export const AdminLayout = () => {
             )
           })}
         </nav>
-        <div className="p-4 mt-auto border-t border-slate-800 absolute bottom-0 w-full md:w-64">
+        <div className="p-4 mt-auto border-t border-slate-800">
           <Button variant="ghost" className="w-full justify-start text-slate-400 hover:text-white hover:bg-slate-800" onClick={signOut}>
             <LogOut className="w-4 h-4 mr-3" />
             Sign Out

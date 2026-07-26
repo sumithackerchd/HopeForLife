@@ -10,7 +10,7 @@ const Legal = lazy(() => import('./pages/public/Legal'));
 const Story = lazy(() => import('./pages/public/Story'));
 const Timeline = lazy(() => import('./pages/public/Timeline'));
 const Reports = lazy(() => import('./pages/public/Reports'));
-const Donate = lazy(() => import('./pages/public/Donate'));
+import Donate from './pages/public/Donate';
 const DonationSuccess = lazy(() => import('./pages/public/DonationSuccess'));
 const Updates = lazy(() => import('./pages/public/Updates'));
 const Blog = lazy(() => import('./pages/public/Blog'));

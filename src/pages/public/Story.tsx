@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { Database } from '@/types/database';
 import { SEO } from '@/components/common/SEO';
 
