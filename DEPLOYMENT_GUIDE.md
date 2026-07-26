@@ -23,13 +23,20 @@ npx supabase link --project-ref dkctyxhkolgdqehkqsae
 *(Enter your database password when prompted).*
 
 ### 3. Set the required secrets for the Edge Function
-The `payment_adapter` function requires your Supabase URL and Service Role Key to bypass RLS and insert donations securely.
-```bash
-npx supabase secrets set SUPABASE_URL=https://dkctyxhkolgdqehkqsae.supabase.co --project-ref dkctyxhkolgdqehkqsae
+The `payment_adapter` function requires your Supabase credentials to bypass RLS, and Razorpay credentials to create orders and verify payment signatures securely.
 
+Get your API keys from the Razorpay Dashboard (Settings > API Keys).
+
+```bash
+# Supabase Keys
+npx supabase secrets set SUPABASE_URL=https://dkctyxhkolgdqehkqsae.supabase.co --project-ref dkctyxhkolgdqehkqsae
 npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your_actual_service_role_key_here --project-ref dkctyxhkolgdqehkqsae
+
+# Razorpay Keys
+npx supabase secrets set RAZORPAY_KEY_ID=your_razorpay_key_id --project-ref dkctyxhkolgdqehkqsae
+npx supabase secrets set RAZORPAY_KEY_SECRET=your_razorpay_key_secret --project-ref dkctyxhkolgdqehkqsae
 ```
-*(Note: You can find your `SERVICE_ROLE_KEY` in the Supabase Dashboard under Settings > API. Do NOT expose this key in your frontend `.env` file).*
+*(Note: You can find your `SERVICE_ROLE_KEY` in the Supabase Dashboard under Settings > API. Do NOT expose this key or your Razorpay secret in your frontend `.env` file).*
 
 ### 4. Deploy the Edge Function
 Because guest donations don't have a signed-in user token, you **must** deploy the function with the `--no-verify-jwt` flag so it doesn't block anonymous requests:

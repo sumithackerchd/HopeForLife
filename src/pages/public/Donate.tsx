@@ -60,6 +60,20 @@ export default function Donate() {
     setAmount(val);
   };
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) {
@@ -72,35 +86,98 @@ export default function Donate() {
       return;
     }
 
+    if (paymentGateway !== 'razorpay') {
+      toast.error('Currently only Razorpay is fully integrated for real payments.');
+      return;
+    }
+
     setIsLoading(true);
     try {
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded) {
+        throw new Error('Razorpay SDK failed to load. Please check your internet connection.');
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
-      const payload = {
-        amount: Number(amount),
-        currency,
-        donor_name: name,
-        email,
-        message,
-        is_anonymous: isAnonymous,
-        gateway: paymentGateway,
-        user_id: session?.user?.id || null,
-        campaign_id: campaign.id
-      };
-
-      const { data, error } = await supabase.functions.invoke('payment_adapter', {
-        body: payload
+      // 1. Create Razorpay Order
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('payment_adapter', {
+        body: {
+          action: 'create_order',
+          amount: Number(amount),
+          currency
+        }
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (orderError) throw orderError;
+      if (orderData?.error) throw new Error(orderData.error);
 
-      // Simulate the redirect and processing that would happen with a real gateway
-      setTimeout(() => {
-        toast.success('Donation successful!');
-        navigate('/donation/success');
+      const { order_id, amount: rpAmount, currency: rpCurrency, key_id } = orderData;
+
+      // 2. Initialize Razorpay Checkout
+      const options = {
+        key: key_id,
+        amount: rpAmount,
+        currency: rpCurrency,
+        name: "HopeForLife",
+        description: `Donation for ${campaign.beneficiary}`,
+        order_id: order_id,
+        handler: async function (response: any) {
+          try {
+            // We set loading true again while verifying on backend
+            setIsLoading(true);
+            toast.loading('Verifying payment...', { id: 'verify-toast' });
+            
+            // 3. Verify Payment & Save to Supabase
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('payment_adapter', {
+              body: {
+                action: 'verify_payment',
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                amount: Number(amount),
+                currency,
+                donor_name: name,
+                email,
+                message,
+                is_anonymous: isAnonymous,
+                gateway: paymentGateway,
+                user_id: session?.user?.id || null,
+                campaign_id: campaign.id
+              }
+            });
+
+            if (verifyError) throw verifyError;
+            if (verifyData?.error) throw new Error(verifyData.error);
+
+            toast.dismiss('verify-toast');
+            toast.success('Donation successful! Thank you.');
+            navigate('/donation/success');
+          } catch (err: any) {
+            toast.dismiss('verify-toast');
+            toast.error(err.message || 'Payment verification failed');
+          } finally {
+            setIsLoading(false);
+          }
+        },
+        prefill: {
+          name: name,
+          email: email,
+        },
+        theme: {
+          color: "#0f172a"
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        toast.error(response.error.description || 'Payment failed');
         setIsLoading(false);
-      }, 1500);
+      });
+      
+      // Stop the button loading state as the modal is taking over
+      setIsLoading(false); 
+      rzp.open();
 
     } catch (err: any) {
       toast.error(err.message || 'An error occurred during payment setup');
