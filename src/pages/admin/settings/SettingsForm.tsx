@@ -29,7 +29,7 @@ export default function SettingsForm() {
   const fetchSettings = async () => {
     try {
       const { data, error } = await supabase
-        .from('platform_settings')
+        .from('settings')
         .select('*')
         .eq('id', 1)
         .single();
@@ -49,7 +49,7 @@ export default function SettingsForm() {
     setSaving(true);
     try {
       const { error } = await supabase
-        .from('platform_settings')
+        .from('settings')
         .upsert({ id: 1, ...data });
 
       if (error) throw error;
