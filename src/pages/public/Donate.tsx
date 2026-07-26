@@ -39,37 +39,29 @@ export default function Donate() {
 
     setIsLoading(true);
     try {
-      // Create donation record in DB as pending
+      // Create donation record in DB as pending via Edge Function
       const { data: { session } } = await supabase.auth.getSession();
       
-      const { data: donation, error } = await supabase
-        .from('donations')
-        .insert({
-          amount: Number(amount),
-          currency,
-          donor_name: name,
-          email,
-          message,
-          is_anonymous: isAnonymous,
-          payment_gateway: paymentGateway,
-          payment_status: 'pending',
-          user_id: session?.user?.id || null
-        })
-        .select()
-        .single();
+      const payload = {
+        amount: Number(amount),
+        currency,
+        donor_name: name,
+        email,
+        message,
+        is_anonymous: isAnonymous,
+        gateway: paymentGateway,
+        user_id: session?.user?.id || null
+      };
+
+      const { data, error } = await supabase.functions.invoke('payment_adapter', {
+        body: payload
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // TODO: Call universal payment adapter via Edge Function
-      // For now, simulate success
-      setTimeout(async () => {
-        // Mock success redirect
-        // In real impl, redirect to checkout URL or use SDK
-        await supabase
-          .from('donations')
-          .update({ payment_status: 'completed' })
-          .eq('id', donation.id);
-          
+      // Simulate the redirect and processing that would happen with a real gateway
+      setTimeout(() => {
         toast.success('Donation successful!');
         navigate('/donation/success');
         setIsLoading(false);
