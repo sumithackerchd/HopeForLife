@@ -9,7 +9,12 @@ import { Heart, CreditCard, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Database } from '@/types/database';
+
+type Campaign = Database['public']['Tables']['campaigns']['Row'];
+
+const QUICK_AMOUNTS = [100, 500, 1000, 2500, 5000, 10000];
 
 export default function Donate() {
   const [searchParams] = useSearchParams();

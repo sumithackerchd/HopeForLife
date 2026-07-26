@@ -7,6 +7,7 @@ import { routes, publicRoutes } from './routes';
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RouteGuard } from '@/components/common/RouteGuard';
+import { AdminLayout } from '@/components/layouts/AdminLayout';
 import UserDashboard from '@/pages/dashboard/UserDashboard';
 import UserProfile from '@/pages/dashboard/UserProfile';
 import UserSettings from '@/pages/dashboard/UserSettings';
