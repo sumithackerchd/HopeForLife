@@ -30,6 +30,7 @@ export default function Donate() {
   const location = useLocation();
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [isFetchingCampaign, setIsFetchingCampaign] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -37,6 +38,7 @@ export default function Donate() {
 
     if (campaignSlug) {
       const fetchCampaign = async () => {
+        setIsFetchingCampaign(true);
         try {
           const { data, error } = await supabase
             .from('campaigns')
@@ -48,12 +50,14 @@ export default function Donate() {
           setCampaign(data);
         } catch (err) {
           console.error('Error fetching campaign:', err);
+        } finally {
+          setIsFetchingCampaign(false);
         }
       };
 
       fetchCampaign();
     }
-  }, [location]);
+  }, [location.search]);
 
   const handleAmountSelect = (val: string) => {
     setIsCustomAmount(false);
@@ -195,14 +199,21 @@ export default function Donate() {
         <div className="lg:col-span-2 space-y-8">
           <div>
             <h1 className="text-4xl font-bold mb-4 text-foreground">Make a Donation</h1>
-            <p className="text-lg text-muted-foreground text-balance">
-              {campaign ? `Your contribution will directly fund ${campaign.beneficiary}'s medical needs.` : 'Please select a campaign to donate to.'}
-            </p>
+            {isFetchingCampaign ? (
+              <p className="text-lg text-muted-foreground animate-pulse">Loading campaign details...</p>
+            ) : (
+              <p className="text-lg text-muted-foreground text-balance">
+                {campaign ? `Your contribution will directly fund ${campaign.beneficiary}'s medical needs.` : 'Please select a campaign to donate to.'}
+              </p>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="bg-card border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-              <h2 className="text-xl font-bold text-foreground">1. Select Amount</h2>
+            <div className="bg-card/60 backdrop-blur-xl border rounded-3xl p-6 md:p-8 shadow-sm space-y-6 transition-all hover:shadow-md">
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm">1</span>
+                Select Amount
+              </h2>
               
               <div className="flex items-center gap-4 mb-6">
                 <Select value={currency} onValueChange={setCurrency}>
@@ -345,38 +356,49 @@ export default function Donate() {
           </form>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-muted/30 border rounded-2xl p-6">
-            <h3 className="font-bold text-lg mb-4 text-foreground">Campaign Summary</h3>
-            {campaign ? (
+        <div className="space-y-6 sticky top-24">
+          <div className="bg-card/60 backdrop-blur-xl border rounded-3xl p-6 shadow-sm">
+            <h3 className="font-bold text-lg mb-4 text-foreground flex items-center gap-2">
+              <Heart className="w-5 h-5 text-primary" />
+              Campaign Summary
+            </h3>
+            {isFetchingCampaign ? (
+              <div className="space-y-4 animate-pulse">
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+                <div className="h-2 bg-muted rounded w-full"></div>
+              </div>
+            ) : campaign ? (
               <div className="space-y-4">
                 <h4 className="font-semibold text-foreground line-clamp-2">{campaign.title}</h4>
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
+                  <div className="flex justify-between text-sm mb-2">
                     <span className="text-muted-foreground">Raised</span>
-                    <span className="font-medium">₹{campaign.current_raised_amount.toLocaleString()}</span>
+                    <span className="font-bold text-primary">₹{campaign.current_raised_amount.toLocaleString()}</span>
                   </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${percentFunded}%` }} />
+                  <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full transition-all duration-1000 ease-out" style={{ width: `${percentFunded}%` }} />
                   </div>
-                  <div className="flex justify-between text-xs mt-1">
-                    <span className="text-muted-foreground">{percentFunded}% of Goal</span>
-                    <span className="text-muted-foreground">₹{campaign.goal_amount.toLocaleString()}</span>
+                  <div className="flex justify-between text-xs mt-2">
+                    <span className="text-muted-foreground font-medium">{percentFunded}% of Goal</span>
+                    <span className="text-muted-foreground font-medium">₹{campaign.goal_amount.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-muted-foreground">
-                No campaign selected.
+              <div className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-xl">
+                No campaign selected. Please return to the homepage and select a campaign.
               </div>
             )}
           </div>
           
-          <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-primary shrink-0" />
-            <p className="text-sm text-foreground">
-              HopeForLife does not charge any platform fee. 100% of your donation (minus payment gateway charges) goes directly to the patient's hospital account.
-            </p>
+          <div className="bg-primary/5 border border-primary/10 rounded-3xl p-6 flex gap-4 items-start shadow-sm">
+            <ShieldCheck className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-sm mb-1 text-foreground">Secure & Transparent</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                HopeForLife does not charge any platform fee. 100% of your donation (minus gateway charges) goes directly to the patient's hospital account.
+              </p>
+            </div>
           </div>
         </div>
       </div>
