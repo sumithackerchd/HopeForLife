@@ -6,10 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Heart, CreditCard, AlertCircle, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Database } from '@/types/database';
+
+type Campaign = Database['public']['Tables']['campaigns']['Row'];
 
 const QUICK_AMOUNTS = [100, 500, 1000, 2500, 5000, 10000];
 
@@ -24,6 +27,33 @@ export default function Donate() {
   const [paymentGateway, setPaymentGateway] = useState('stripe');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const campaignSlug = searchParams.get('campaign');
+
+    if (campaignSlug) {
+      const fetchCampaign = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('campaigns')
+            .select('*')
+            .eq('slug', campaignSlug)
+            .single();
+
+          if (error) throw error;
+          setCampaign(data);
+        } catch (err) {
+          console.error('Error fetching campaign:', err);
+        }
+      };
+
+      fetchCampaign();
+    }
+  }, [location]);
 
   const handleAmountSelect = (val: string) => {
     setIsCustomAmount(false);
@@ -37,9 +67,13 @@ export default function Donate() {
       return;
     }
 
+    if (!campaign) {
+      toast.error('No campaign selected. Please start a donation from a campaign page.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Create donation record in DB as pending via Edge Function
       const { data: { session } } = await supabase.auth.getSession();
       
       const payload = {
@@ -50,7 +84,8 @@ export default function Donate() {
         message,
         is_anonymous: isAnonymous,
         gateway: paymentGateway,
-        user_id: session?.user?.id || null
+        user_id: session?.user?.id || null,
+        campaign_id: campaign.id
       };
 
       const { data, error } = await supabase.functions.invoke('payment_adapter', {
@@ -73,6 +108,10 @@ export default function Donate() {
     }
   };
 
+  const percentFunded = campaign && campaign.goal_amount > 0 
+    ? Math.min(100, Math.round((campaign.current_raised_amount / campaign.goal_amount) * 100))
+    : 0;
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -80,7 +119,7 @@ export default function Donate() {
           <div>
             <h1 className="text-4xl font-bold mb-4 text-foreground">Make a Donation</h1>
             <p className="text-lg text-muted-foreground text-balance">
-              Your contribution will directly fund Aryan's bone marrow transplant and chemotherapy.
+              {campaign ? `Your contribution will directly fund ${campaign.beneficiary}'s medical needs.` : 'Please select a campaign to donate to.'}
             </p>
           </div>
 
@@ -232,27 +271,34 @@ export default function Donate() {
         <div className="space-y-6">
           <div className="bg-muted/30 border rounded-2xl p-6">
             <h3 className="font-bold text-lg mb-4 text-foreground">Campaign Summary</h3>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Raised</span>
-                  <span className="font-medium">₹2,45,000</span>
-                </div>
-                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: '16%' }} />
-                </div>
-                <div className="flex justify-between text-xs mt-1">
-                  <span className="text-muted-foreground">16% of Goal</span>
-                  <span className="text-muted-foreground">₹15,00,000</span>
+            {campaign ? (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-foreground line-clamp-2">{campaign.title}</h4>
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-muted-foreground">Raised</span>
+                    <span className="font-medium">₹{campaign.current_raised_amount.toLocaleString()}</span>
+                  </div>
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${percentFunded}%` }} />
+                  </div>
+                  <div className="flex justify-between text-xs mt-1">
+                    <span className="text-muted-foreground">{percentFunded}% of Goal</span>
+                    <span className="text-muted-foreground">₹{campaign.goal_amount.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                No campaign selected.
+              </div>
+            )}
           </div>
           
           <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 flex gap-3">
             <AlertCircle className="w-5 h-5 text-primary shrink-0" />
             <p className="text-sm text-foreground">
-              HopeForLife does not charge any platform fee. 100% of your donation (minus payment gateway charges) goes directly to Aryan's hospital account.
+              HopeForLife does not charge any platform fee. 100% of your donation (minus payment gateway charges) goes directly to the patient's hospital account.
             </p>
           </div>
         </div>

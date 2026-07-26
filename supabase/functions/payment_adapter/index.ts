@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, currency, donor_name, email, message, is_anonymous, gateway, user_id } = await req.json();
+    const { amount, currency, donor_name, email, message, is_anonymous, gateway, user_id, campaign_id } = await req.json();
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -38,7 +38,8 @@ serve(async (req) => {
         is_anonymous,
         payment_gateway: gateway,
         payment_status: 'completed',
-        user_id
+        user_id,
+        campaign_id
       })
       .select()
       .single();

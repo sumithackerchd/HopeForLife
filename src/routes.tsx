@@ -39,7 +39,7 @@ export const publicRoutes: ExtendedRouteConfig[] = [
   { path: 'privacy', element: <Legal /> },
   { path: 'terms', element: <Legal /> },
   { path: 'refund', element: <Legal /> },
-  { path: 'story', element: <Story /> },
+  { path: 'story/:slug', element: <Story /> },
   { path: 'timeline', element: <Timeline /> },
   { path: 'reports', element: <Reports /> },
   { path: 'donate', element: <Donate /> },
