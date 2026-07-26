@@ -15,10 +15,9 @@ export const AdminLayout = () => {
   
   const navItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+    { name: 'Campaigns', path: '/admin/campaigns', icon: FileText },
     { name: 'Donations', path: '/admin/donations', icon: Heart },
     { name: 'Users', path: '/admin/users', icon: Users },
-    { name: 'Medical Reports', path: '/admin/reports', icon: FileText },
-    { name: 'Updates', path: '/admin/updates', icon: Bell },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
 

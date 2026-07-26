@@ -1,83 +1,156 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, Users, DollarSign, Activity } from 'lucide-react';
+import { supabase } from '@/lib/supabase/client';
+import { Heart, Users, FileText, Activity } from 'lucide-react';
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 export default function AdminDashboard() {
-  return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Overview of platform metrics and recent activities.</p>
-      </div>
+  const [stats, setStats] = useState({
+    totalRaised: 0,
+    donationCount: 0,
+    campaignCount: 0,
+    activeCampaigns: 0,
+    recentDonations: [] as any[],
+    monthlyData: [] as any[],
+  });
+  const [loading, setLoading] = useState(true);
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      // 1. Get Donations
+      const { data: donations } = await supabase
+        .from('donations')
+        .select('*')
+        .eq('payment_status', 'completed');
+
+      const totalRaised = donations?.reduce((sum, d) => sum + Number(d.amount), 0) || 0;
+      
+      // 2. Get Campaigns
+      const { data: campaigns } = await supabase
+        .from('campaigns')
+        .select('*');
+        
+      const activeCampaigns = campaigns?.filter(c => c.status === 'published').length || 0;
+
+      // 3. Process chart data (last 6 months)
+      const monthlyMap = new Map();
+      const now = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthName = d.toLocaleString('default', { month: 'short' });
+        monthlyMap.set(monthName, { name: monthName, total: 0 });
+      }
+
+      donations?.forEach(d => {
+        const dDate = new Date(d.created_at);
+        const diffMonths = (now.getFullYear() - dDate.getFullYear()) * 12 + (now.getMonth() - dDate.getMonth());
+        if (diffMonths <= 5 && diffMonths >= 0) {
+          const monthName = dDate.toLocaleString('default', { month: 'short' });
+          if (monthlyMap.has(monthName)) {
+            monthlyMap.get(monthName).total += Number(d.amount);
+          }
+        }
+      });
+
+      setStats({
+        totalRaised,
+        donationCount: donations?.length || 0,
+        campaignCount: campaigns?.length || 0,
+        activeCampaigns,
+        recentDonations: donations?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5) || [],
+        monthlyData: Array.from(monthlyMap.values()),
+      });
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading dashboard...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Dashboard Overview</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Raised</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹2,45,000</div>
-            <p className="text-xs text-muted-foreground mt-1">+20.1% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Donors</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">42</div>
-            <p className="text-xs text-muted-foreground mt-1">+3 this week</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Donations</CardTitle>
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground mt-1">in the last 7 days</p>
+            <div className="text-2xl font-bold">₹{stats.totalRaised.toLocaleString()}</div>
           </CardContent>
         </Card>
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Goal Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">Donations</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.donationCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Campaigns</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">16.3%</div>
-            <div className="h-2 w-full bg-muted rounded-full overflow-hidden mt-2">
-              <div className="h-full bg-primary rounded-full transition-all" style={{ width: '16.3%' }} />
-            </div>
+            <div className="text-2xl font-bold">{stats.activeCampaigns}</div>
+            <p className="text-xs text-muted-foreground">Out of {stats.campaignCount} total</p>
           </CardContent>
         </Card>
       </div>
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="col-span-2">
           <CardHeader>
-            <CardTitle>Overview</CardTitle>
+            <CardTitle>Donation Trends (Last 6 Months)</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px] flex items-center justify-center border-t border-dashed mt-4">
-            <p className="text-muted-foreground">Chart Placeholder</p>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={stats.monthlyData}>
+                  <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="total" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3">
+
+        <Card>
           <CardHeader>
             <CardTitle>Recent Donations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-8">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-center">
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">Anonymous Supporter</p>
-                    <p className="text-sm text-muted-foreground">user@example.com</p>
+            <div className="space-y-4">
+              {stats.recentDonations.map((donation) => (
+                <div key={donation.id} className="flex items-center justify-between border-b pb-2 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium">{donation.is_anonymous ? 'Anonymous' : donation.donor_name || 'Anonymous'}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(donation.created_at).toLocaleDateString()}</p>
                   </div>
-                  <div className="ml-auto font-medium">+₹{i * 1000}</div>
+                  <div className="font-medium text-sm">
+                    {donation.currency} {donation.amount}
+                  </div>
                 </div>
               ))}
+              {stats.recentDonations.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">No recent donations</p>
+              )}
             </div>
           </CardContent>
         </Card>

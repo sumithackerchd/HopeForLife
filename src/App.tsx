@@ -11,6 +11,11 @@ import UserDashboard from '@/pages/dashboard/UserDashboard';
 import UserProfile from '@/pages/dashboard/UserProfile';
 import UserSettings from '@/pages/dashboard/UserSettings';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
+const CampaignList = lazy(() => import('@/pages/admin/campaigns/CampaignList'));
+const CampaignForm = lazy(() => import('@/pages/admin/campaigns/CampaignForm'));
+const DonationList = lazy(() => import('@/pages/admin/donations/DonationList'));
+const UserList = lazy(() => import('@/pages/admin/users/UserList'));
+const SettingsForm = lazy(() => import('@/pages/admin/settings/SettingsForm'));
 
 const App: React.FC = () => {
   return (
@@ -46,11 +51,36 @@ const App: React.FC = () => {
                 {route.path === '/admin' && (
                   <>
                     <Route index element={<AdminDashboard />} />
-                    <Route path="donations" element={<div className="p-8 text-center text-muted-foreground border rounded-xl bg-card">Donations Management</div>} />
-                    <Route path="users" element={<div className="p-8 text-center text-muted-foreground border rounded-xl bg-card">User Management</div>} />
-                    <Route path="reports" element={<div className="p-8 text-center text-muted-foreground border rounded-xl bg-card">Medical Reports Management</div>} />
-                    <Route path="updates" element={<div className="p-8 text-center text-muted-foreground border rounded-xl bg-card">Updates Management</div>} />
-                    <Route path="settings" element={<div className="p-8 text-center text-muted-foreground border rounded-xl bg-card">System Settings</div>} />
+                    <Route path="campaigns" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <CampaignList />
+                      </Suspense>
+                    } />
+                    <Route path="campaigns/new" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <CampaignForm />
+                      </Suspense>
+                    } />
+                    <Route path="campaigns/edit/:id" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <CampaignForm />
+                      </Suspense>
+                    } />
+                    <Route path="donations" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <DonationList />
+                      </Suspense>
+                    } />
+                    <Route path="users" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <UserList />
+                      </Suspense>
+                    } />
+                    <Route path="settings" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <SettingsForm />
+                      </Suspense>
+                    } />
                   </>
                 )}
               </Route>

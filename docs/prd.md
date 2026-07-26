@@ -57,20 +57,17 @@ HopeForLife Platform
 │   ├── Donation History
 │   ├── Profile
 │   └── Settings
-└── Admin Dashboard
-    ├── Dashboard Home
+└── Admin Panel
+    ├── Dashboard
+    ├── Campaign Management
+    │   ├── Campaign List
+    │   ├── Create Campaign
+    │   ├── Edit Campaign
+    │   └── Campaign Detail
     ├── Donation Management
     ├── User Management
-    ├── Campaign Management
-    ├── Medical Reports Management
-    ├── Updates Management
-    ├── Blog Management
-    ├── Email Broadcast
-    ├── Newsletter Management
-    ├── Site Settings
-    ├── SEO Settings
-    ├── Payment Settings
-    └── SMTP Settings
+    ├── Reports
+    └── Settings
 ```
 
 ### 3.2 Public Pages
@@ -222,77 +219,105 @@ HopeForLife Platform
 - Allow newsletter subscription management
 - Enable password change functionality
 
-### 3.5 Admin Dashboard
+### 3.5 Admin Panel
 
-#### 3.5.1 Dashboard Home
-- Display analytics charts showing donation trends
-- Show total donations, total donors, and fundraising progress
-- Present recent donation activities
-- Display user registration statistics
+#### 3.5.1 Dashboard
+- Display real-time statistics retrieved from Supabase:
+  + Total campaign count
+  + Total donation count
+  + Active campaigns count
+  + Total raised amount
+- Show live charts visualizing donation trends over time
+- List recent donations with donor names, amounts, dates, and campaign names
+- Display campaign performance metrics
 
-#### 3.5.2 Donation Management
-- List all donations with donor names, amounts, dates, payment status, and messages
-- Provide filtering and search functionality
-- Enable export of donation data
-- Allow manual marking of payment status
+#### 3.5.2 Campaign Management
 
-#### 3.5.3 User Management
-- List all registered users with names, emails, registration dates, and roles
-- Enable user search and filtering
-- Allow editing of user roles and status
-- Provide user deletion functionality
+##### 3.5.2.1 Campaign List
+- Display all campaigns in table format with columns: Title, Beneficiary, Goal Amount, Current Raised Amount, Status, Created Date
+- Provide search functionality by title, beneficiary, or slug
+- Enable filtering by status: Published, Draft, Archived
+- Show action buttons for each campaign: Edit, Delete, Publish/Unpublish, Archive
+- Display campaign count summary by status
 
-#### 3.5.4 Campaign Management
-- Allow editing of fundraising goal amount
-- Enable updating of campaign status
-- Provide campaign description editing
+##### 3.5.2.2 Create Campaign
+- Provide input fields for campaign data:
+  + Title
+  + Slug (auto-generated from title, editable)
+  + Beneficiary (child's name)
+  + Hospital (name and details)
+  + Goal Amount
+  + Current Raised Amount (default to 0)
+  + Category (dropdown selection)
+  + Story (rich text editor)
+  + Images (multiple image upload)
+  + Cover Image (single image upload)
+  + Medical Reports (multiple file upload)
+  + Videos (video URL input or file upload)
+  + SEO fields: Meta Title, Meta Description, Keywords
+  + Status (dropdown: Draft, Published)
+- Validate required fields before submission
+- Save campaign data to Supabase upon submission
+- Redirect to Campaign List after successful creation
 
-#### 3.5.5 Medical Reports Management
-- Allow uploading of medical reports in PDF and image formats
-- Enable editing of report titles and descriptions
-- Provide report deletion functionality
-- Allow marking reports as verified
+##### 3.5.2.3 Edit Campaign
+- Load existing campaign data from Supabase
+- Display all campaign fields with current values
+- Allow modification of all fields
+- Update campaign data in Supabase upon submission
+- Redirect to Campaign List after successful update
 
-#### 3.5.6 Updates Management
-- Allow creation of new updates with titles and content
-- Enable editing and deletion of existing updates
-- Support scheduling of future updates
+##### 3.5.2.4 Campaign Detail
+- Display complete campaign information
+- Show all campaign fields in read-only format
+- Provide action buttons: Edit, Delete, Publish/Unpublish, Archive
 
-#### 3.5.7 Blog Management
-- Allow creation of blog posts with titles, content, featured images, categories, and tags
-- Enable editing and deletion of blog posts
-- Support draft and published status
-- Provide SEO settings for each post
+##### 3.5.2.5 Campaign Actions
+- **Publish/Unpublish**: Toggle campaign status between Published and Draft, update status in Supabase
+- **Delete**: Remove campaign record from Supabase after confirmation
+- **Archive**: Change campaign status to Archived, update status in Supabase
 
-#### 3.5.8 Email Broadcast
-- Allow composing and sending emails to all registered users
-- Provide email template selection
-- Enable scheduling of email broadcasts
+#### 3.5.3 Donation Management
+- Display all donations in table format with columns: Donor Name, Amount, Campaign, Date, Payment Status, Gateway, Transaction ID
+- Provide search functionality by donor name, transaction ID, or campaign name
+- Enable filtering by:
+  + Payment Status: Success, Pending, Failed
+  + Gateway: Payment provider name
+  + Date Range: Start date and end date
+- Provide export functionality:
+  + Export to CSV format
+  + Export to Excel format
+- Retrieve all donation data from Supabase
+- Display total donation count and total amount raised
 
-#### 3.5.9 Newsletter Management
-- Display list of newsletter subscribers
-- Allow exporting subscriber list
-- Enable sending newsletters to subscribers
+#### 3.5.4 User Management
+- Display all registered users in table format with columns: Name, Email, Registration Date, Role, Status
+- Provide search functionality by name or email
+- Enable user actions:
+  + Ban User: Change user status to banned, update status in Supabase
+  + Promote to Admin: Change user role to admin, update role in Supabase
+- Retrieve all user data from Supabase
+- Display total user count
 
-#### 3.5.10 Site Settings
-- Allow editing of site name, tagline, and logo
-- Enable updating of contact information
-- Provide social media links management
-- Allow editing of all public-facing text content
+#### 3.5.5 Reports
+- Generate and display platform reports:
+  + Donation summary by date range
+  + Campaign performance report
+  + User registration trends
+  + Payment gateway performance
+- Provide export functionality for reports
+- Retrieve report data from Supabase
 
-#### 3.5.11 SEO Settings
-- Allow editing of meta titles and descriptions for all pages
-- Enable configuration of Open Graph and Twitter Card settings
-- Provide schema markup management
-
-#### 3.5.12 Payment Settings
-- Allow configuration of payment gateway credentials
-- Support multiple payment providers
-- Enable switching between payment providers
-
-#### 3.5.13 SMTP Settings
-- Allow configuration of SMTP server details
-- Enable testing of email sending functionality
+#### 3.5.6 Settings
+- Allow configuration of platform settings:
+  + Site name and tagline
+  + Contact information
+  + Social media links
+  + Payment gateway credentials
+  + SMTP server details
+  + SEO settings
+- Save all settings to Supabase
+- Load current settings from Supabase on page load
 
 ## 4. Business Rules and Logic
 
@@ -320,7 +345,7 @@ HopeForLife Platform
 
 ### 4.5 User Roles and Permissions
 - **Donor Role**: Can make donations, view donation history, manage profile
-- **Admin Role**: Full access to admin dashboard and all management functions
+- **Admin Role**: Full access to admin panel and all management functions
 - Role assignment is performed by existing administrators
 
 ### 4.6 Medical Reports Verification
@@ -352,6 +377,34 @@ HopeForLife Platform
 - Platform is ready to support recurring donations
 - Recurring donation setup requires payment gateway configuration
 
+### 4.12 Campaign Status Management
+- **Draft**: Campaign is not visible to public, only accessible by administrators
+- **Published**: Campaign is visible to public and accepts donations
+- **Archived**: Campaign is no longer active, not visible to public, donations disabled
+- Status changes are immediately reflected in Supabase
+
+### 4.13 Campaign Slug Generation
+- Slug is auto-generated from campaign title upon creation
+- Slug is URL-friendly (lowercase, hyphens instead of spaces)
+- Slug must be unique across all campaigns
+- Administrators can manually edit slug before saving
+
+### 4.14 Current Raised Amount Update
+- Current Raised Amount is automatically calculated from total donations linked to campaign
+- Manual updates to Current Raised Amount are allowed for administrative corrections
+- Amount is updated in real-time when new donations are received
+
+### 4.15 Admin Panel Data Integrity
+- All data displayed in Admin Panel is retrieved from Supabase in real-time
+- All CRUD operations (Create, Read, Update, Delete) are performed directly on Supabase
+- No placeholder data or fake numbers are used
+- Dashboard statistics are calculated from actual database records
+
+### 4.16 User Ban and Role Promotion
+- Banned users cannot log in to platform
+- Promoted users gain full admin access immediately
+- Role and status changes are logged for audit purposes
+
 ## 5. Exceptions and Edge Cases
 
 | Scenario | Handling |
@@ -361,20 +414,26 @@ HopeForLife Platform
 | Invalid email verification link | Display error message, provide option to resend verification email |
 | Expired password reset link | Display error message, provide option to request new reset link |
 | Duplicate email registration | Display error message indicating email already registered |
-| Unauthorized access to admin dashboard | Redirect to login page, display access denied message |
+| Unauthorized access to admin panel | Redirect to login page, display access denied message |
 | File upload exceeds size limit | Display error message with size limit information |
 | Invalid file format for medical reports | Display error message with supported formats |
 | Network timeout during donation | Display pending status, provide instructions to check email for confirmation |
 | Search with no results | Display message indicating no matching results found |
 | Unsubscribe from newsletter with invalid token | Display error message, provide contact information for support |
+| Duplicate campaign slug | Display error message, suggest alternative slug |
+| Delete campaign with existing donations | Display confirmation warning, allow deletion with option to archive instead |
+| Supabase connection failure | Display error message, retry connection, log error for administrator |
+| Export with no data | Display message indicating no data available for export |
+| Ban user who is currently logged in | Invalidate user session immediately, redirect to login page |
+| Promote user to admin with insufficient permissions | Display error message, require super admin approval |
 
 ## 6. Acceptance Criteria
 
 1. Visitor accesses landing page and views child's medical story, fundraising progress, and recent donors
 2. Visitor navigates to donation page, selects donation amount, completes payment, and receives donation receipt
 3. Donor registers account, verifies email, logs in, and views donation history in user dashboard
-4. Administrator logs into admin dashboard, uploads medical report, creates update, and sends email broadcast to all users
-5. Visitor subscribes to newsletter from landing page footer and receives confirmation email
+4. Administrator logs into admin panel, creates new campaign with all required fields, publishes campaign, and verifies campaign appears on public pages
+5. Administrator views dashboard with real-time statistics from Supabase, accesses donation management, filters donations by payment status, and exports donation data to CSV
 
 ## 7. Out of Scope for Current Release
 
@@ -393,3 +452,8 @@ HopeForLife Platform
 - Merchandise store for fundraising products
 - Integration with accounting software
 - Multi-campaign support for multiple children or causes
+- Advanced campaign analytics and A/B testing
+- Automated campaign status transitions based on goal achievement
+- Campaign duplication or template functionality
+- Bulk campaign operations
+- Campaign approval workflow for multi-admin environments
