@@ -9,14 +9,10 @@ import { Heart, CreditCard, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase/client';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Database } from '@/types/database';
-
-type Campaign = Database['public']['Tables']['campaigns']['Row'];
-
-const QUICK_AMOUNTS = [100, 500, 1000, 2500, 5000, 10000];
+import { useSearchParams } from 'react-router-dom';
 
 export default function Donate() {
+  const [searchParams] = useSearchParams();
   const [amount, setAmount] = useState<string>('2500');
   const [isCustomAmount, setIsCustomAmount] = useState(false);
   const [currency, setCurrency] = useState('INR');
@@ -24,16 +20,14 @@ export default function Donate() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [paymentGateway, setPaymentGateway] = useState('stripe');
+  const [paymentGateway, setPaymentGateway] = useState('razorpay');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [isFetchingCampaign, setIsFetchingCampaign] = useState(false);
+  const [isFetchingCampaign, setIsFetchingCampaign] = useState(true); // Start true so it doesn't flicker "not found"
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
     const campaignSlug = searchParams.get('campaign');
 
     if (campaignSlug) {
@@ -44,20 +38,28 @@ export default function Donate() {
             .from('campaigns')
             .select('*')
             .eq('slug', campaignSlug)
+            .eq('status', 'published')
             .single();
 
-          if (error) throw error;
-          setCampaign(data);
+          if (error) {
+            console.error('Error fetching campaign:', error);
+            setCampaign(null);
+          } else {
+            setCampaign(data);
+          }
         } catch (err) {
           console.error('Error fetching campaign:', err);
+          setCampaign(null);
         } finally {
           setIsFetchingCampaign(false);
         }
       };
 
       fetchCampaign();
+    } else {
+      setIsFetchingCampaign(false);
     }
-  }, [location.search]);
+  }, [searchParams]);
 
   const handleAmountSelect = (val: string) => {
     setIsCustomAmount(false);
@@ -201,9 +203,13 @@ export default function Donate() {
             <h1 className="text-4xl font-bold mb-4 text-foreground">Make a Donation</h1>
             {isFetchingCampaign ? (
               <p className="text-lg text-muted-foreground animate-pulse">Loading campaign details...</p>
-            ) : (
+            ) : campaign ? (
               <p className="text-lg text-muted-foreground text-balance">
-                {campaign ? `Your contribution will directly fund ${campaign.beneficiary}'s medical needs.` : 'Please select a campaign to donate to.'}
+                Your contribution will directly fund {campaign.beneficiary}'s medical needs.
+              </p>
+            ) : (
+              <p className="text-lg text-muted-foreground text-balance text-destructive">
+                Campaign not found.
               </p>
             )}
           </div>
@@ -385,8 +391,8 @@ export default function Donate() {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-muted-foreground py-4 text-center border border-dashed rounded-xl">
-                No campaign selected. Please return to the homepage and select a campaign.
+              <div className="text-sm text-destructive py-4 text-center border border-dashed rounded-xl">
+                Campaign not found. Please return to the homepage and select a valid campaign.
               </div>
             )}
           </div>

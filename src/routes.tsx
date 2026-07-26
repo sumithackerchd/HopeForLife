@@ -92,11 +92,6 @@ export const routes: RouteConfig[] = [
     path: '/dashboard',
     element: <DashboardLayout />,
     public: false,
-  },
-  {
-    name: 'Admin',
-    path: '/admin',
-    element: <AdminLayout />,
-    public: false,
   }
+  // Remove /admin from automatic route mapping to handle it explicitly in App.tsx with nested routes
 ];

@@ -48,43 +48,44 @@ const App: React.FC = () => {
                     <Route path="settings" element={<UserSettings />} />
                   </>
                 )}
-                {route.path === '/admin' && (
-                  <>
-                    <Route index element={<AdminDashboard />} />
-                    <Route path="campaigns" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <CampaignList />
-                      </Suspense>
-                    } />
-                    <Route path="campaigns/new" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <CampaignForm />
-                      </Suspense>
-                    } />
-                    <Route path="campaigns/edit/:id" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <CampaignForm />
-                      </Suspense>
-                    } />
-                    <Route path="donations" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <DonationList />
-                      </Suspense>
-                    } />
-                    <Route path="users" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <UserList />
-                      </Suspense>
-                    } />
-                    <Route path="settings" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <SettingsForm />
-                      </Suspense>
-                    } />
-                  </>
-                )}
               </Route>
             ))}
+            
+            {/* Explicitly map admin sub-routes to avoid rendering them outside the AdminLayout */}
+            <Route path="/admin" element={<RouteGuard requireAuth requireAdmin><AdminLayout /></RouteGuard>}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="campaigns" element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <CampaignList />
+                </Suspense>
+              } />
+              <Route path="campaigns/new" element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <CampaignForm />
+                </Suspense>
+              } />
+              <Route path="campaigns/edit/:id" element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <CampaignForm />
+                </Suspense>
+              } />
+              <Route path="donations" element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <DonationList />
+                </Suspense>
+              } />
+              <Route path="users" element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <UserList />
+                </Suspense>
+              } />
+              <Route path="settings" element={
+                <Suspense fallback={<div>Loading...</div>}>
+                  <SettingsForm />
+                </Suspense>
+              } />
+            </Route>
+
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
